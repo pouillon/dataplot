@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -e
+
+my_package=`basename ${PWD}`
+my_version=`basename ${PWD} | cut -d- -f2`
+my_excludes=".bzr* make-release .*.swp"
+
+for xcl in ${my_excludes}; do
+  tar_cmds="${tar_cmds} --exclude ${xcl}"
+done
+
+cd ..
+tar cvzf ${my_package}.tar.gz ${tar_cmds} ${my_package}
+gpg --armor --sign --detach-sig --default-key 87F54329 ${my_package}.tar.gz
