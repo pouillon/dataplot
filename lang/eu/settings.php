@@ -1,3 +1,3 @@
 <?php
 
-$lang['path'] = 'Toki-Gnuplot programako bidea (e.g. <code>/usr/bin/gnuplot</code>).';
+$lang['path'] = 'Zure Gnuplot exekutagarriko bidea (adibidez <code>/usr/bin/gnuplot</code>).';
