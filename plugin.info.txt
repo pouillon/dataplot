@@ -1,0 +1,8 @@
+base    dataplot
+author  Yann Pouillon
+email   yann.pouillon@gmail.com
+date    2014-06-27
+name    Data Plotting Plugin
+desc    Create plots from tabular data using Gnuplot
+url     http://www.dokuwiki.org/plugin:dataplot
+
