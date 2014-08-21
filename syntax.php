@@ -60,8 +60,11 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
       'columns'  => 2,
       'plottype' => 'lines',
       'smooth'   => false,
+      'xlabel'   => '',
+      'ylabel'   => '',
       'gnuplot'  => '',
-      'version'  => $info['date'], // Force rebuild of images on update
+      'debug'    => false,
+      'version'  => ''
     );
 
     // Prepare input
@@ -98,12 +101,22 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
     if ( preg_match('/\b(smooth)\b/i', $conf, $match) ) {
       $return['smooth'] = true;
     }
+    if ( preg_match('/xlabel="([^"]*)"/i', $conf, $match) ) {
+      $return['xlabel'] = $match[1];
+    }
+    if ( preg_match('/ylabel="([^"]*)"/i', $conf, $match) ) {
+      $return['ylabel'] = $match[1];
+    }
+    if ( preg_match('/\b(debug)\b/i', $conf, $match) ) {
+      $return['debug'] = true;
+    }
 
-    // We only pass a hash around
-    $input = trim(join("\n", $lines))."\n";
-    $return['md5'] = md5($input);
+    // Force rebuild of images on update
+    $return['version'] = date('Y-m-d H:i:s');
+    $return['md5'] = md5($input.$return['version']);
 
     // Generate Gnuplot code (must be last)
+    $input = trim(join("\n", $lines))."\n";
     if ( $return['width'] != 0 && $return['height'] != 0 ) {
       $gnu_size = ' size '.$return['width'].','.$return['height'];
     } else {
@@ -115,6 +128,13 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
       $gnu_style = '';
     }
     $gnu_style .= ' with '.$return['plottype'];
+    $gnu_labels = '';
+    if ( strlen($return['xlabel']) > 0 ) {
+      $gnu_labels .= "set xlabel \"".$return['xlabel']."\"\nshow xlabel\n";
+    }
+    if ( strlen($return['ylabel']) > 0 ) {
+      $gnu_labels .= "set ylabel \"".$return['ylabel']."\"\nshow ylabel\n";
+    }
 
     $gnu_code  = "# Input parameters:\n#\n";
     foreach ($return as $param => $value) {
@@ -124,6 +144,7 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
     }
     $gnu_code .= "#\n\n";
     $gnu_code .= 'set terminal pngcairo enhanced dashed font "arial,14" linewidth 2'.$gnu_size."\n";
+    $gnu_code .= $gnu_labels;
     $gnu_code .= "set output \"@gnu_output@\"\n";
     $gnu_code .= 'plot';
     $sep  = ' ';
@@ -144,14 +165,9 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
    * Cache file is based on parameters that influence the resulting image
    */
   function _cachename($data, $ext) {
-    unset($data['width']);
-    unset($data['height']);
-    unset($data['align']);
-    unset($data['columns']);
-    unset($data['smooth']);
-    unset($data['gnuplot']);
-
-    return getcachename(join('x', array_values($data)), '.dataplot.'.$ext);
+    return getcachename(
+      $data['md5'].'x'.$data['layout'].'x'.$data['plottype'],
+      '.dataplot.'.$ext);
   }
 
   /**
@@ -167,8 +183,10 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
       if ( $data['align'] == 'left' )  $R->doc .= ' align="left"';
       $R->doc .= '/>';
 
-      // Comment out the following line for debugging
-      //$R->doc .= "<pre>".$data['gnuplot']."</pre>";
+      // Debugging
+      if ( $data['debug'] ) {
+        $R->doc .= "<pre>".$data['gnuplot']."</pre>";
+      }
 
       return true;
     } elseif ( $format == 'odt' ) {
