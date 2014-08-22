@@ -113,7 +113,7 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
 
     // Force rebuild of images on update
     $return['version'] = date('Y-m-d H:i:s');
-    $return['md5'] = md5($input.$return['version']);
+    $return['hash'] = (string) uniqid("dataplot_", true);
 
     // Generate Gnuplot code (must be last)
     $input = trim(join("\n", $lines))."\n";
@@ -166,8 +166,7 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
    */
   function _cachename($data, $ext) {
     return getcachename(
-      $data['md5'].'x'.$data['layout'].'x'.$data['plottype'],
-      '.dataplot.'.$ext);
+      $data['hash'].'x'.$data['layout'].'x'.$data['plottype'], $ext);
   }
 
   /**
