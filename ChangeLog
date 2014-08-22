@@ -1,0 +1,11 @@
+2014-08-22  Yann Pouillon  <yann.pouillon@gmail.com>
+
+* syntax.php: Pages with more than one plot now properly display all of them,
+instead of copies of the last one (fixes lp:1359775). The image files now
+have unique names.
+
+2014-08-21  Yann Pouillon  <yann.pouillon@gmail.com>
+
+* syntax.php: Fixed MD5 sum independent of the date. Added debug option
+for developers. Added xlabel and ylabel options for axes labels.
+
