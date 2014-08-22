@@ -58,7 +58,7 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
       'align'    => '',
       'layout'   => '2D',
       'columns'  => 2,
-      'plottype' => 'lines',
+      'plottype' => 'linespoints',
       'smooth'   => false,
       'xlabel'   => '',
       'ylabel'   => '',
