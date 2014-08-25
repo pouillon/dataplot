@@ -62,6 +62,8 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
       'smooth'   => false,
       'xlabel'   => '',
       'ylabel'   => '',
+      'xrange'   => '',
+      'yrange'   => '',
       'gnuplot'  => '',
       'debug'    => false,
       'version'  => ''
@@ -72,8 +74,8 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
       'medium-blue',
       'orange-red',
       'dark-violet',
-      'dark-chartreuse',
       'dark-turquoise',
+      'dark-chartreuse',
       'grey40',
       'black'
     );
@@ -101,6 +103,21 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
       $return['ylabel'] = $match[1];
       $conf = preg_replace('/ylabel="([^"]*)"/i', '', $conf);
     }
+    if ( preg_match('/xrange=(-?\d*\.\d+(e-?\d+)?:-?\d*\.\d+(e-?\d+)?)/i', $conf, $match) ) {
+      $return['xrange'] = $match[1];
+    }
+    if ( preg_match('/yrange=(-?\d*\.\d+(e-?\d+)?:-?\d*\.\d+(e-?\d+)?)/i', $conf, $match) ) {
+      $return['yrange'] = $match[1];
+    }
+    if ( preg_match('/\b(2D|3D)\b/i', $conf, $match) ) {
+      $return['layout'] = strtolower($match[1]);
+    }
+    if ( preg_match('/\b(boxes|lines|linespoints|points)\b/i', $conf, $match) ) {
+      $return['plottype'] = $match[1];
+    }
+    if ( preg_match('/\b(smooth)\b/i', $conf, $match) ) {
+      $return['smooth'] = true;
+    }
     if ( preg_match('/\b(left|center|right)\b/i', $conf, $match) ) {
       $return['align'] = $match[1];
     }
@@ -108,20 +125,11 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
       $return['width']  = $match[1];
       $return['height'] = $match[2];
     }
-    if ( preg_match('/\b(2D|3D)\b/i', $conf, $match) ) {
-      $return['layout'] = strtolower($match[1]);
-    }
     if ( preg_match('/\bwidth=([0-9]+)\b/i', $conf, $match) ) {
       $return['width'] = $match[1];
     }
     if ( preg_match('/\bheight=([0-9]+)\b/i', $conf, $match) ) {
       $return['height'] = $match[1];
-    }
-    if ( preg_match('/\b(boxes|lines|linespoints|points)\b/i', $conf, $match) ) {
-      $return['plottype'] = $match[1];
-    }
-    if ( preg_match('/\b(smooth)\b/i', $conf, $match) ) {
-      $return['smooth'] = true;
     }
     if ( preg_match('/\b(debug)\b/i', $conf, $match) ) {
       $return['debug'] = true;
@@ -140,10 +148,16 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
     }
     $gnu_labels = '';
     if ( strlen($return['xlabel']) > 0 ) {
-      $gnu_labels .= "set xlabel \"".$return['xlabel']."\"\nshow xlabel\n";
+      $gnu_labels .= "set xlabel \"".$return['xlabel']."\"\n";
     }
     if ( strlen($return['ylabel']) > 0 ) {
-      $gnu_labels .= "set ylabel \"".$return['ylabel']."\"\nshow ylabel\n";
+      $gnu_labels .= "set ylabel \"".$return['ylabel']."\"\n";
+    }
+    if ( strlen($return['xrange']) > 0 ) {
+      $gnu_ranges .= "set xrange [".$return['xrange']."]\n";
+    }
+    if ( strlen($return['yrange']) > 0 ) {
+      $gnu_ranges .= "set yrange [".$return['yrange']."]\n";
     }
 
     $gnu_code  = "# Input parameters:\n#\n";
@@ -155,6 +169,7 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
     $gnu_code .= "#\n\n";
     $gnu_code .= 'set terminal pngcairo enhanced dashed font "arial,14" linewidth 2'.$gnu_size."\n";
     $gnu_code .= $gnu_labels;
+    $gnu_code .= $gnu_ranges;
     $gnu_code .= "set output \"@gnu_output@\"\n";
     for ($i=1; $i<sizeof($gnu_colors); $i++) {
       $gnu_code .= "set style line $i linetype rgb \"".$gnu_colors[$i]."\" linewidth 1.2 pointtype $i\n";
