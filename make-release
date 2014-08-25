@@ -11,5 +11,5 @@ for xcl in ${my_excludes}; do
 done
 
 cd ..
-tar cvzf ${my_package}.tar.gz ${tar_cmds} ${my_package}
+tar cvzf ${my_package}.tar.gz ${tar_cmds} ${my_package}/.
 gpg --armor --sign --detach-sig --default-key 87F54329 ${my_package}.tar.gz
