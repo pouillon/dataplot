@@ -1,3 +1,9 @@
+2014-08-25  Yann Pouillon  <yann.pouillon@gmail.com>
+
+* syntax.php: Fixed 'linespoints' plot style. Created a customizable color
+theme for accessibility. Added 'xrange' and 'yrange' options. Made preventive
+bugfixes.
+
 2014-08-22  Yann Pouillon  <yann.pouillon@gmail.com>
 
 * syntax.php: Pages with more than one plot now properly display all of them,
