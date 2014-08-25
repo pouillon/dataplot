@@ -66,6 +66,17 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
       'debug'    => false,
       'version'  => ''
     );
+    $gnu_colors = array(
+      'white',
+      'red',
+      'medium-blue',
+      'orange-red',
+      'dark-violet',
+      'dark-chartreuse',
+      'dark-turquoise',
+      'grey40',
+      'black'
+    );
 
     // Prepare input
     $lines = explode("\n", $match);
@@ -79,6 +90,17 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
     $return['columns'] = count($cols);
 
     // Match config options
+    // Note: treating xlabel and ylabel first then removing them from the
+    //       config string, in order to avoid misinterpretations of
+    //       further options.
+    if ( preg_match('/xlabel="([^"]*)"/i', $conf, $match) ) {
+      $return['xlabel'] = $match[1];
+      $conf = preg_replace('/xlabel="([^"]*)"/i', '', $conf);
+    }
+    if ( preg_match('/ylabel="([^"]*)"/i', $conf, $match) ) {
+      $return['ylabel'] = $match[1];
+      $conf = preg_replace('/ylabel="([^"]*)"/i', '', $conf);
+    }
     if ( preg_match('/\b(left|center|right)\b/i', $conf, $match) ) {
       $return['align'] = $match[1];
     }
@@ -101,12 +123,6 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
     if ( preg_match('/\b(smooth)\b/i', $conf, $match) ) {
       $return['smooth'] = true;
     }
-    if ( preg_match('/xlabel="([^"]*)"/i', $conf, $match) ) {
-      $return['xlabel'] = $match[1];
-    }
-    if ( preg_match('/ylabel="([^"]*)"/i', $conf, $match) ) {
-      $return['ylabel'] = $match[1];
-    }
     if ( preg_match('/\b(debug)\b/i', $conf, $match) ) {
       $return['debug'] = true;
     }
@@ -122,12 +138,6 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
     } else {
       $gnu_size = '';
     }
-    if ( $return['smooth'] ) {
-      $gnu_style = ' smooth csplines';
-    } else {
-      $gnu_style = '';
-    }
-    $gnu_style .= ' with '.$return['plottype'];
     $gnu_labels = '';
     if ( strlen($return['xlabel']) > 0 ) {
       $gnu_labels .= "set xlabel \"".$return['xlabel']."\"\nshow xlabel\n";
@@ -146,10 +156,20 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
     $gnu_code .= 'set terminal pngcairo enhanced dashed font "arial,14" linewidth 2'.$gnu_size."\n";
     $gnu_code .= $gnu_labels;
     $gnu_code .= "set output \"@gnu_output@\"\n";
+    for ($i=1; $i<sizeof($gnu_colors); $i++) {
+      $gnu_code .= "set style line $i linetype rgb \"".$gnu_colors[$i]."\" linewidth 1.2 pointtype $i\n";
+    }
     $gnu_code .= 'plot';
     $sep  = ' ';
     for ($i=2; $i<=$return['columns']; $i++) {
-      $gnu_code .= $sep.'"@gnu_input@" using 1:'.$i.' notitle'.$gnu_style;
+      $gnu_style = $i-1;
+      if ( $return['smooth'] && ($return['plottype'] == 'linespoints') ) {
+        $gnu_code .= $sep.'"@gnu_input@" using 1:'.$i.' notitle smooth csplines with lines linestyle '.$gnu_style;
+        $sep = ", \\\n     ";
+        $gnu_code .= $sep.'"@gnu_input@" using 1:'.$i.' notitle with points linestyle '.$gnu_style;
+      } else {
+        $gnu_code .= $sep.'"@gnu_input@" using 1:'.$i.' notitle with '.$return[plottype].' linestyle '.$gnu_style;
+      }
       $sep = ", \\\n     ";
     }
     $gnu_code .= "\n";
@@ -166,7 +186,7 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
    */
   function _cachename($data, $ext) {
     return getcachename(
-      $data['hash'].'x'.$data['layout'].'x'.$data['plottype'], $ext);
+      $data['hash'].'x'.$data['layout'].'x'.$data['plottype'], '.'.$ext);
   }
 
   /**
@@ -184,7 +204,7 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
 
       // Debugging
       if ( $data['debug'] ) {
-        $R->doc .= "<pre>".$data['gnuplot']."</pre>";
+        $R->doc .= '<pre>'.$data['gnuplot'].'</pre>';
       }
 
       return true;

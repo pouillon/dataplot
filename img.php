@@ -5,7 +5,7 @@
  */
 
 if ( !defined('DOKU_INC') ) {
-  define('DOKU_INC',dirname(__FILE__).'/../../../');
+  define('DOKU_INC', dirname(__FILE__).'/../../../');
 }
 define('NOSESSION',true);
 require_once(DOKU_INC.'inc/init.php');
@@ -21,7 +21,7 @@ header('Expires: '.gmdate("D, d M Y H:i:s", time()+max($conf['cachetime'], 3600)
 header('Cache-Control: public, proxy-revalidate, no-transform, max-age='.max($conf['cachetime'], 3600));
 header('Pragma: public');
 http_conditionalRequest($time);
-echo io_readFile($cache,false);
+echo io_readFile($cache, false);
 
 function _fail() {
   header("HTTP/1.0 404 Not Found");
