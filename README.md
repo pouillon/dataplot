@@ -1,7 +1,8 @@
 Data Plotting Plugin for DokuWiki
+=================================
 
 All documentation for this plugin can be found at
-http://www.dokuwiki.org/plugin:dataplot
+https://www.dokuwiki.org/plugin:dataplot
 
 If you install this plugin manually, make sure it is installed in
 lib/plugins/dataplot/ - if the folder is called different it
@@ -11,7 +12,7 @@ Please refer to http://www.dokuwiki.org/plugins for additional info
 on how to install plugins in DokuWiki.
 
 ----
-Copyright (C) 2014 Yann Pouillon <yann.pouillon@gmail.com>
+Copyright (C) 2014-2020 Yann Pouillon
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

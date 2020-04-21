@@ -3,7 +3,7 @@
  * dataplot-Plugin: Parses Gnuplot data blocks
  *
  * @license    GPL 3 (http://www.gnu.org/licenses/gpl-3.0.html)
- * @author     Yann Pouillon <yann.pouillon@gmail.com>
+ * @author     Yann Pouillon <yann.pouillon@materialsevolution.es>
  */
 
 
