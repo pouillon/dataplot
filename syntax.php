@@ -48,7 +48,7 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
   /**
    * Handle the match
    */
-  function handle($match, $state, $pos, &$handler) {
+  function handle($match, $state, $pos, Doku_Handler $handler) {
     $info = $this->getInfo();
 
     // Set-up default data
