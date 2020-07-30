@@ -207,25 +207,25 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
   /**
    * Create output
    */
-  function render($format, &$R, $data) {
+  function render($format, Doku_Renderer $renderer, $data) {
     if ( $format == 'xhtml' ) {
       $img = DOKU_BASE.'lib/plugins/dataplot/img.php?'.buildURLparams($data);
-      $R->doc .= '<img src="'.$img.'" class="media'.$data['align'].'" alt=""';
-      if ( $data['width'] )  $R->doc .= ' width="'.$data['width'].'"';
-      if ( $data['height'] ) $R->doc .= ' height="'.$data['height'].'"';
-      if ( $data['align'] == 'right' ) $R->doc .= ' align="right"';
-      if ( $data['align'] == 'left' )  $R->doc .= ' align="left"';
-      $R->doc .= '/>';
+      $renderer->doc .= '<img src="'.$img.'" class="media'.$data['align'].'" alt=""';
+      if ( $data['width'] )  $renderer->doc .= ' width="'.$data['width'].'"';
+      if ( $data['height'] ) $renderer->doc .= ' height="'.$data['height'].'"';
+      if ( $data['align'] == 'right' ) $renderer->doc .= ' align="right"';
+      if ( $data['align'] == 'left' )  $renderer->doc .= ' align="left"';
+      $renderer->doc .= '/>';
 
       // Debugging
       if ( $data['debug'] ) {
-        $R->doc .= '<pre>'.$data['gnuplot'].'</pre>';
+        $renderer->doc .= '<pre>'.$data['gnuplot'].'</pre>';
       }
 
       return true;
     } elseif ( $format == 'odt' ) {
       $src = $this->_imgfile($data);
-      $R->_odtAddImage($src, $data['width'], $data['height'], $data['align']);
+      $renderer->_odtAddImage($src, $data['width'], $data['height'], $data['align']);
 
       return true;
     }
