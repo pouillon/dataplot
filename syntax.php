@@ -58,12 +58,18 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
       'align'    => '',
       'layout'   => '2D',
       'columns'  => 2,
-      'plottype' => 'linespoints',
+      'y2tics'   => false,
+      'y2use'    => [],
+      'plottype' => [],
       'smooth'   => false,
       'xlabel'   => '',
       'ylabel'   => '',
+      'y2label'   => '',
+      'hline'    => [],
+      'vline'    => [],
       'xrange'   => '',
       'yrange'   => '',
+      'y2range'   => '',
       'gnuplot'  => '',
       'debug'    => false,
       'version'  => ''
@@ -103,17 +109,40 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
       $return['ylabel'] = $match[1];
       $conf = preg_replace('/ylabel="([^"]*)"/i', '', $conf);
     }
+    if ( preg_match('/y2label="([^"]*)"/i', $conf, $match) ) {
+      $return['y2label'] = $match[1];
+      $conf = preg_replace('/y2label="([^"]*)"/i', '', $conf);
+    }
+    if ( preg_match_all('/hline="([^"]*)"/i', $conf, $match) ) {
+      $return['hline'] = $match[1];
+      $conf = preg_replace('/hline="([^"]*)"/i', '', $conf, -1);
+    }
+    if ( preg_match_all('/vline="([^"]*)"/i', $conf, $match) ) {
+      $return['vline'] = $match[1];
+      $conf = preg_replace('/vline="([^"]*)"/i', '', $conf, -1);
+    }
     if ( preg_match('/xrange=(-?\d*\.\d+(e-?\d+)?:-?\d*\.\d+(e-?\d+)?)/i', $conf, $match) ) {
       $return['xrange'] = $match[1];
     }
     if ( preg_match('/yrange=(-?\d*\.\d+(e-?\d+)?:-?\d*\.\d+(e-?\d+)?)/i', $conf, $match) ) {
       $return['yrange'] = $match[1];
     }
+    if ( preg_match('/y2range=(-?\d*\.\d+(e-?\d+)?:-?\d*\.\d+(e-?\d+)?)/i', $conf, $match) ) {
+      $return['y2range'] = $match[1];
+    }
     if ( preg_match('/\b(2D|3D)\b/i', $conf, $match) ) {
       $return['layout'] = strtolower($match[1]);
     }
-    if ( preg_match('/\b(boxes|lines|linespoints|points)\b/i', $conf, $match) ) {
+    if ( preg_match('/\b(y2tics)\b/i', $conf, $match) ) {
+      $return['y2tics'] = true;
+    }
+    if ( preg_match('/\by2use=((?:\d,)*\d)\b/', $conf, $match) ) {
+      $return['y2use'] = json_decode('['.$match[1].']');
+    }
+    if ( preg_match_all('/\b(boxes|lines|linespoints|points)\b/i', $conf, $match) ) {
       $return['plottype'] = $match[1];
+    } else {
+      $return['plottype'] = ['linespoints'];
     }
     if ( preg_match('/\b(smooth)\b/i', $conf, $match) ) {
       $return['smooth'] = true;
@@ -159,6 +188,17 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
     if ( strlen($return['yrange']) > 0 ) {
       $gnu_ranges .= "set yrange [".$return['yrange']."]\n";
     }
+    $gnu_ranges .= "set ytics nomirror\n";
+    $gnu_ranges .= "set xtics nomirror\n";
+    if ( $return['y2tics'] ) {
+      $gnu_ranges .= "set y2tics\n";
+      if ( strlen($return['y2range']) > 0 ) {
+        $gnu_ranges .= "set y2range [".$return['y2range']."]\n";
+      }
+      if ( strlen($return['y2label']) > 0 ) {
+        $gnu_labels .= "set y2label \"".$return['y2label']."\"\n"; 
+      }
+    }
 
     $gnu_code  = "# Input parameters:\n#\n";
     foreach ($return as $param => $value) {
@@ -174,16 +214,46 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
     for ($i=1; $i<sizeof($gnu_colors); $i++) {
       $gnu_code .= "set style line $i linetype rgb \"".$gnu_colors[$i]."\" linewidth 1.2 pointtype $i\n";
     }
+    $j=$i;
+    if ( count($return['hline']) > 0 ) {
+      foreach ($return['hline'] as $id => $hline) {
+        $hline=explode(':',$hline);
+        $gnu_code .= "set style line $i linetype rgb \"".$hline[0]."\" linewidth 0.8 pointtype $i\n";
+        $i++;
+      }
+    }
+    if ( count($return['vline']) > 0 ) {
+      foreach ($return['vline'] as $id => $vline) {
+        $vline=explode(':',$vline);
+        $gnu_code .= "set style line $i linetype rgb \"".$vline[0]."\" linewidth 0.8 pointtype $i\n";
+        $gnu_code .= "set arrow from ".$vline[1].", graph 0 to ".$vline[1].", graph 1 nohead linestyle $i\n";
+        $i++;
+      }
+    }
     $gnu_code .= 'plot';
     $sep  = ' ';
+    if ( count($return['hline']) > 0 ) {
+      foreach ($return['hline'] as $id => $hline) {
+        $hline=explode(':',$hline);
+        $gnu_code .= $sep.$hline[1].$sep."notitle linestyle $j,";
+        $j++;
+      }
+    }
     for ($i=2; $i<=$return['columns']; $i++) {
       $gnu_style = $i-1;
-      if ( $return['smooth'] && ($return['plottype'] == 'linespoints') ) {
-        $gnu_code .= $sep.'"@gnu_input@" using 1:'.$i.' notitle smooth csplines with lines linestyle '.$gnu_style;
-        $sep = ", \\\n     ";
-        $gnu_code .= $sep.'"@gnu_input@" using 1:'.$i.' notitle with points linestyle '.$gnu_style;
+      $_plt=$return['plottype'][$i-2];
+      if (!$_plt) { $_plt=$return['plottype'][0]; }
+      if ( in_array($i-1, $return['y2use']) ) {
+        $axis='x1y2';
       } else {
-        $gnu_code .= $sep.'"@gnu_input@" using 1:'.$i.' notitle with '.$return[plottype].' linestyle '.$gnu_style;
+        $axis='x1y1';
+      }
+      if ( $return['smooth'] && ($_plt == 'linespoints') ) {
+        $gnu_code .= $sep.'"@gnu_input@" using 1:'.$i.' axis '.$axis.' notitle smooth csplines with lines linestyle '.$gnu_style;
+        $sep = ", \\\n     ";
+        $gnu_code .= $sep.'"@gnu_input@" using 1:'.$i.' axis '.$axis.' notitle with points linestyle '.$gnu_style;
+      } else {
+        $gnu_code .= $sep.'"@gnu_input@" using 1:'.$i.' axis '.$axis.' notitle with '.$_plt.' linestyle '.$gnu_style;
       }
       $sep = ", \\\n     ";
     }
