@@ -65,8 +65,8 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
       'xlabel'   => '',
       'ylabel'   => '',
       'y2label'   => '',
-      'hline'    => '',
-      'vline'    => '',
+      'hline'    => [],
+      'vline'    => [],
       'xrange'   => '',
       'yrange'   => '',
       'y2range'   => '',
@@ -113,13 +113,13 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
       $return['y2label'] = $match[1];
       $conf = preg_replace('/y2label="([^"]*)"/i', '', $conf);
     }
-    if ( preg_match('/hline="([^"]*)"/i', $conf, $match) ) {
+    if ( preg_match_all('/hline="([^"]*)"/i', $conf, $match) ) {
       $return['hline'] = $match[1];
-      $conf = preg_replace('/hline="([^"]*)"/i', '', $conf, 1);
+      $conf = preg_replace('/hline="([^"]*)"/i', '', $conf, -1);
     }
-    if ( preg_match('/vline="([^"]*)"/i', $conf, $match) ) {
+    if ( preg_match_all('/vline="([^"]*)"/i', $conf, $match) ) {
       $return['vline'] = $match[1];
-      $conf = preg_replace('/vline="([^"]*)"/i', '', $conf, 1);
+      $conf = preg_replace('/vline="([^"]*)"/i', '', $conf, -1);
     }
     if ( preg_match('/xrange=(-?\d*\.\d+(e-?\d+)?:-?\d*\.\d+(e-?\d+)?)/i', $conf, $match) ) {
       $return['xrange'] = $match[1];
@@ -214,20 +214,30 @@ class syntax_plugin_dataplot extends DokuWiki_Syntax_Plugin {
     for ($i=1; $i<sizeof($gnu_colors); $i++) {
       $gnu_code .= "set style line $i linetype rgb \"".$gnu_colors[$i]."\" linewidth 1.2 pointtype $i\n";
     }
-    if ( strlen($return['hline']) > 0 ) {
-      $hline=explode(':',$return['hline']);
-      $gnu_code .= "set style line 10 linetype rgb \"".$hline[0]."\" linewidth 0.8 pointtype 10\n";
+    $j=$i;
+    if ( count($return['hline']) > 0 ) {
+      foreach ($return['hline'] as $id => $hline) {
+        $hline=explode(':',$hline);
+        $gnu_code .= "set style line $i linetype rgb \"".$hline[0]."\" linewidth 0.8 pointtype $i\n";
+        $i++;
+      }
     }
-    if ( strlen($return['vline']) > 0 ) {
-      $vline=explode(':',$return['vline']);
-      $gnu_code .= "set style line 20 linetype rgb \"".$vline[0]."\" linewidth 0.8 pointtype 10\n";
-      $gnu_code .= "set arrow from ".$vline[1].", graph 0 to ".$vline[1].", graph 1 nohead linestyle 20\n";
+    if ( count($return['vline']) > 0 ) {
+      foreach ($return['vline'] as $id => $vline) {
+        $vline=explode(':',$vline);
+        $gnu_code .= "set style line $i linetype rgb \"".$vline[0]."\" linewidth 0.8 pointtype $i\n";
+        $gnu_code .= "set arrow from ".$vline[1].", graph 0 to ".$vline[1].", graph 1 nohead linestyle $i\n";
+        $i++;
+      }
     }
     $gnu_code .= 'plot';
     $sep  = ' ';
-    if ( strlen($return['hline']) > 0 ) {
-      $hline=explode(':',$return['hline']);
-      $gnu_code .= $sep.$hline[1].$sep."notitle linestyle 10,";
+    if ( count($return['hline']) > 0 ) {
+      foreach ($return['hline'] as $id => $hline) {
+        $hline=explode(':',$hline);
+        $gnu_code .= $sep.$hline[1].$sep."notitle linestyle $j,";
+        $j++;
+      }
     }
     for ($i=2; $i<=$return['columns']; $i++) {
       $gnu_style = $i-1;
